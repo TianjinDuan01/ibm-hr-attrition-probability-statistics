@@ -4,7 +4,7 @@ A two-part probabilistic and statistical exploration of the IBM HR Employee Attr
 
 This is a probability/statistics-focused companion to the [IBM HR Attrition business analysis](https://github.com/TianjinDuan01/ibm-hr-attrition-analysis) (Tableau dashboard + cost modeling for a business audience). Where that repo answers *"who is leaving and why"* for stakeholders, this analysis builds the underlying probabilistic model: joint/conditional probability, Bayes' theorem, random variable distributions, conditional expectation, and covariance/correlation structure.
 
-🔗 [Part 1 Report (PDF)](./Part1_Descriptive_Stats_and_Probability.pdf) · [Part 2 Report (PDF)](./Part2_Random_Variables_and_Correlation.pdf) · [Part 1 Source (Rmd)](./part1_analysis.Rmd) · [Part 2 Source (Rmd)](./part2_analysis.Rmd)
+[Part 1 Report (PDF)](./Part1_Descriptive_Stats_and_Probability.pdf) · [Part 2 Report (PDF)](./Part2_Random_Variables_and_Correlation.pdf) · [Part 1 Source (Rmd)](./part1_analysis.Rmd) · [Part 2 Source (Rmd)](./part2_analysis.Rmd)
 
 ---
 
