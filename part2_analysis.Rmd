@@ -1,0 +1,213 @@
+---
+title: "Module Project 2"
+output: pdf_document
+date: "2025-09-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+# Load the dataset (the cleaned version from Module Project 1)
+
+df <- read.csv("Statistical Analysis/Project/IBM_HR_Employee_Cleaned.csv")
+
+# View summary
+summary(df$MonthlyIncome)
+```
+
+
+Define the random variable for your data using one of the probability distributions covered in the course:
+- MonthlyIncome as a continuous random variable (modeled using Normal distribution)
+
+```{r}
+# Check summary of MonthlyIncome
+
+summary(df$MonthlyIncome)
+
+```
+
+
+```{r}
+# The value of mean, standard deviation, variance and skewness
+
+income_mean <- mean(df$MonthlyIncome)
+income_sd <- sd(df$MonthlyIncome)
+income_var <- var(df$MonthlyIncome)
+income_skew <- skewness(df$MonthlyIncome)
+
+
+# Show the results of mean and variance
+
+cat("Mean Monthly Income:", income_mean, "\n")
+cat("Standard Deviation of Monthly Income:", income_sd, "\n")
+cat("Variance of Monthly Income:", income_var, "\n")
+cat("Skewness of Monthly Income:", income_skew, "\n")
+```
+
+
+```{r}
+library(e1071)
+library(scales)
+
+# Plot
+ggplot(df, aes(x = MonthlyIncome)) +
+  geom_histogram(aes(y = ..density..), 
+                 bins = 40, 
+                 fill = "skyblue", 
+                 color = "black", 
+                 alpha = 0.7) +
+  geom_density(color = "red", size = 1.2) +
+  geom_vline(xintercept = income_mean, color = "blue", linetype = "dashed", size = 1) +
+  annotate("text", x = income_mean, y = 0.00022, 
+           label = paste0("Mean = $", format(round(income_mean), big.mark = ",")), 
+           color = "blue", vjust = -0.5, size = 4) +
+  labs(
+    title = "Distribution of Monthly Income",
+    x = "Monthly Income (USD)",
+    y = "Density",
+    caption = paste0(
+      "Red line represents the estimated density curve\n",
+      "Mean = $", format(round(income_mean, 1), big.mark = ","), 
+      " | SD = ", round(income_sd, 1), 
+      " | Variance = ", round(income_var, 1), 
+      " | Skewness = ", round(income_skew, 2)
+    )
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.title.y = element_text(margin = margin(r = 10))
+  )
+
+
+```
+
+
+
+```{r}
+# Calculate conditional expectations
+
+# Summarize the mean MonthlyIncome and standard deviation for each JobLevel
+
+conditional_mean <- df %>%
+  group_by(JobLevel) %>%
+  summarise(
+    Count = n(),
+    MeanIncome = mean(MonthlyIncome),
+    SDIncome = sd(MonthlyIncome)
+  )
+
+print(conditional_mean)
+```
+
+Explanation:
+Each bar shows the average MonthlyIncome (expected value) for a specific JobLevel. 
+As JobLevel increases, we expect MonthlyIncome to increase, which helps understand how income is structured across career levels in the organization.
+
+
+
+```{r}
+# Plot: Bar chart with error bars and value labels
+
+ggplot(conditional_mean, aes(x = factor(JobLevel), y = MeanIncome)) +
+  geom_col(fill = "steelblue") +
+  geom_errorbar(aes(ymin = MeanIncome - SDIncome, ymax = MeanIncome + SDIncome),
+                width = 0.2, color = "black") +
+  
+  geom_text(aes(label = format(round(MeanIncome), big.mark = ",")), 
+            vjust = -0.5, hjust = 1.2, size = 3.5, fontface = "bold", color = "red") +
+
+  geom_text(aes(y = MeanIncome + SDIncome + 300, 
+                label = paste0("±SD=$", format(round(SDIncome), big.mark = ","))), 
+            hjust = -0.2, size = 3, color = "blue") +
+  labs(
+    title = "Expected Monthly Income by Job Level",
+    x = "Job Level",
+    y = "Average Monthly Income (USD)",
+    caption = "Error bars represent ±1 standard deviation"
+  ) +
+  theme_minimal() +
+  ylim(0, max(conditional_mean$MeanIncome + conditional_mean$SDIncome) + 2000)
+
+```
+
+
+```{r}
+# Calculate covariance and correlations
+# We'll analyze the relationship between MonthlyIncome, Age, and YearsAtCompany
+
+# Covariance
+cov_income_age <- cov(df$MonthlyIncome, df$Age)
+cov_income_years <- cov(df$MonthlyIncome, df$YearsAtCompany)
+
+```
+
+```{r}
+# Correlation
+cor_income_age <- cor(df$MonthlyIncome, df$Age)
+cor_income_years <- cor(df$MonthlyIncome, df$YearsAtCompany)
+```
+
+
+```{r}
+# Show the results of covariance and correlation
+
+cat("Covariance (Monthly Income, Age):", cov_income_age, "\n")
+cat("Covariance (Monthly Income, YearsAtCompany):", cov_income_years, "\n")
+
+cat("Correlation (Monthly Income, Age):", cor_income_age, "\n")
+cat("Correlation (Monthly Income, YearsAtCompany):", cor_income_years, "\n")
+```
+
+
+```{r}
+# We'll analyze correlations between: MonthlyIncome, Age, YearsAtCompany
+
+library(corrplot)
+
+# Select relevant variables
+corr_vars <- df %>% select(MonthlyIncome, Age, YearsAtCompany)
+
+# Compute correlation matrix
+cor_matrix <- cor(corr_vars, use = "complete.obs")
+
+# Print correlation matrix
+print(cor_matrix)
+
+```
+
+```{r}
+# Plot
+# install.packages("ggcorrplot")
+library(ggcorrplot)
+
+# Choose Variables - Age, YearsAtCompany and MonthlyIncome
+selected_vars <- df[, c("Age", "YearsAtCompany", "MonthlyIncome")]
+
+# Calculate the matrix
+cor_matrix <- cor(selected_vars, use = "complete.obs")
+
+# Plot
+ggcorrplot(cor_matrix,
+           method = "square",
+           type = "lower",
+           lab = TRUE,
+           lab_size = 4,
+           lab_col = "black",
+           show.diag = TRUE,
+           colors = c("red", "white", "steelblue"),
+           outline.color = "gray",
+           title = "Correlation Matrix of Key Quantitative Variables") +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    axis.title = element_blank()
+  )
+
+```
+
