@@ -1,0 +1,538 @@
+---
+title: "Statistical_Analysis_Project"
+output:
+  pdf_document:
+    latex_engine: xelatex
+
+date: "2025-09-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Data Load
+```{r}
+# Load required packages
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+# Read the CSV file
+df <- read_csv("Statistical Analysis/Project/IBM_HR_Employee.csv")
+
+# View the structure of the data
+str(df)
+
+# See first few rows
+head(df)
+```
+
+# Data Cleaning
+```{r}
+# Remove rows with any missing values
+df_clean <- df %>% na.omit()
+
+# Check for duplicates
+df_clean <- df_clean %>% distinct()
+
+# Check unique values for key variables
+unique(df_clean$Attrition)
+unique(df_clean$OverTime)
+unique(df_clean$Department)
+```
+
+
+# Save the cleaned dataset as a new CSV file
+```{r}
+write.csv(df_clean, "Statistical Analysis/Project/IBM_HR_Employee_Cleaned.csv", row.names = FALSE)
+```
+
+
+# EDA
+```{r}
+# View dataset dimensions
+dim(df_clean)
+
+# Quick summary of all variables
+summary(df_clean)
+
+# See the first 10 rows
+head(df_clean, 10)
+
+# Check variable names
+colnames(df_clean)
+```
+
+# Categorical Variables
+```{r}
+# Identify categorical variable names
+cat_vars <- c("Attrition", "OverTime", "Department", "Gender", "EducationField", "JobRole",
+              "MaritalStatus", "BusinessTravel")
+
+
+df_clean[cat_vars] <- lapply(df_clean[cat_vars], as.factor)
+
+# Check all the selected are categorical variables
+# str(df_clean[cat_vars])
+
+```
+
+
+# Check for Missing Values
+```{r}
+colSums(is.na(df_clean))
+```
+
+
+
+# Module 0 - Descriptive Statistics Report
+
+The dataset used in this project is the IBM HR Employee Attrition dataset. It contains information on 1,470 employees, 
+with 35 variables including demographic information, job roles, compensation, work environment, and attrition status.
+A full variable list is included in the appendix. In this report, we focus on a selected group of variables that are most 
+relevant for both business analysis and the statistical concepts covered in this course.
+
+```{r}
+# Select key variables for Module 0
+df_selected <- df %>%
+  select(Attrition, Department, OverTime, Age, MonthlyIncome, YearsAtCompany)
+
+# View the structure
+str(df_selected)
+summary(df_selected)
+head(df_selected)
+```
+
+## Categorical Variables
+```{r}
+# Attrition
+table(df_clean$Attrition)
+prop.table(table(df_clean$Attrition))
+```
+
+
+```{r}
+# Department
+table(df_clean$Department)
+prop.table(table(df_clean$Department))
+```
+
+
+```{r}
+# OverTime
+table(df_clean$OverTime)
+prop.table(table(df_clean$OverTime))
+```
+
+## Numerical Variables
+
+```{r}
+# Age, MonthlyIncome, YearsAtCompany
+
+summary(df_clean$Age)
+summary(df_clean$MonthlyIncome)
+summary(df_clean$YearsAtCompany)
+
+```
+
+
+
+## Visualization
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Calculate mean and median age
+mean_age <- mean(df_clean$Age)
+median_age <- median(df_clean$Age)
+
+ggplot(df_clean, aes(x = Age)) +
+  geom_histogram(bins = 20, fill = "#56B4E9", color = "black", alpha = 0.7) +
+  geom_vline(aes(xintercept = mean_age), color = "red", linetype = "dashed", size = 1, show.legend = TRUE) +
+  geom_vline(aes(xintercept = median_age), color = "darkgreen", linetype = "dotted", size = 1, show.legend = TRUE) +
+  labs(
+    title = "Age Distribution of Employees",
+    subtitle = paste0("Mean Age: ", round(mean_age, 1), "; Median Age: ", median_age),
+    x = "Employee Age",
+    y = "Number of Employees",
+    caption = "Red dashed = Mean | Green dotted = Median"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+
+```{r}
+# Compute quantiles
+q1 <- quantile(df_clean$MonthlyIncome, 0.25)
+med <- quantile(df_clean$MonthlyIncome, 0.5)
+q3 <- quantile(df_clean$MonthlyIncome, 0.75)
+```
+
+
+```{r}
+ggplot(df_clean, aes(x = "", y = MonthlyIncome)) +
+  geom_boxplot(fill = "gold", color = "black", width = 0.4, outlier.color = "red", outlier.shape = 16) +
+  stat_summary(fun = median, geom = "point", shape = 23, size = 3, fill = "blue", color = "black") +
+  
+  annotate("text", x = 1.13, y = q1, label = paste0("Q1: $", q1), hjust = 0, color = "black", size = 4) +
+  annotate("text", x = 1.13, y = med, label = paste0("Median: $", med), hjust = 0, color = "blue", size = 4) +
+  annotate("text", x = 1.13, y = q3, label = paste0("Q3: $", q3), hjust = 0, color = "black", size = 4) +
+  labs(
+    title = "Boxplot of Monthly Income with Quantiles",
+    subtitle = paste0("Q1: $", q1, " | Median: $", med, " | Q3: $", q3),
+    y = "Monthly Income (USD)",
+    x = NULL,
+    caption = "Red dots = outliers; Blue diamond = median"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+```
+
+
+
+
+```{r}
+# Relationships between Variables
+
+table(df_clean$Attrition, df_clean$Department)
+prop.table(table(df_clean$Attrition, df_clean$Department), 2)
+
+```
+
+
+
+# Module 1 - Probability Analysis
+
+Let’s use the variables: Attrition (Yes/No), OverTime (Yes/No).
+
+## Attrition vs OverTime
+
+## Joint Probability
+
+```{r}
+# Create contingency table
+joint_table <- table(df_selected$Attrition, df_selected$OverTime)
+joint_table
+
+# Joint probabilities
+joint_prob <- prop.table(joint_table)
+joint_prob
+```
+
+
+
+## Conditional Probability
+```{r}
+# Conditional probability: P(Attrition | OverTime)
+cond_prob_attrition_given_overtime <- prop.table(joint_table, 2)
+cond_prob_attrition_given_overtime
+
+# Conditional probability: P(OverTime | Attrition)
+cond_prob_overtime_given_attrition <- prop.table(joint_table, 1)
+cond_prob_overtime_given_attrition
+```
+
+
+## Bayes’ Theorem
+
+Let’s compute: P(Attrition=Yes | OverTime=Yes) using Bayes’ theorem.
+
+Formula: 
+
+```{r}
+# Calculate P(OverTime="Yes" | Attrition="Yes")
+p_overtime_yes_given_attrition_yes <- joint_table["Yes", "Yes"] / sum(joint_table["Yes", ])
+
+# Calculate P(Attrition="Yes")
+p_attrition_yes <- sum(df_selected$Attrition == "Yes") / nrow(df_selected)
+
+# Calculate P(OverTime="Yes")
+p_overtime_yes <- sum(df_selected$OverTime == "Yes") / nrow(df_selected)
+
+# Bayes' theorem
+p_attrition_yes_given_overtime_yes <- (p_overtime_yes_given_attrition_yes * p_attrition_yes) / p_overtime_yes
+p_attrition_yes_given_overtime_yes
+
+```
+
+
+
+### Attrition vs. Department
+Try more variables
+
+```{r}
+# 1. Create contingency table
+attr_dept_table <- table(df_selected$Attrition, df_selected$Department)
+attr_dept_table
+
+# 2. Joint probability table
+attr_dept_joint_prob <- prop.table(attr_dept_table)
+attr_dept_joint_prob
+
+# 3. Conditional probability: P(Attrition | Department)
+# (Probability of attrition status within each department)
+cond_prob_attr_given_dept <- prop.table(attr_dept_table, 2)
+cond_prob_attr_given_dept
+
+# 4. Conditional probability: P(Department | Attrition)
+# (Probability of department within each attrition group)
+cond_prob_dept_given_attr <- prop.table(attr_dept_table, 1)
+cond_prob_dept_given_attr
+
+```
+
+## Bayes’ Theorem
+
+P(Attrition = Yes | Department = Sales) using Bayes’ theorem:
+
+```{r}
+
+# P(Department = Sales | Attrition = Yes)
+p_dept_sales_given_attr_yes <- attr_dept_table["Yes", "Sales"] / sum(attr_dept_table["Yes", ])
+# P(Attrition = Yes)
+p_attr_yes <- sum(df_selected$Attrition == "Yes") / nrow(df_selected)
+# P(Department = Sales)
+p_dept_sales <- sum(df_selected$Department == "Sales") / nrow(df_selected)
+
+# Apply Bayes’ theorem
+p_attr_yes_given_dept_sales <- (p_dept_sales_given_attr_yes * p_attr_yes) / p_dept_sales
+p_attr_yes_given_dept_sales
+
+```
+
+
+# Module 2 - Random Variables, PMF, Expectation, Variance, and CDF
+
+##  Define the Random Variable - Discrete
+
+Let X = "YearsAtCompany" for a randomly selected employee, which is a discrete random variable 
+(showing how many years an employee has worked at the company).
+
+```{r}
+
+# Get the random variable
+X <- df_selected$YearsAtCompany
+
+# PMF: Frequency table of YearsAtCompany
+pmf_table <- table(X) / length(X)
+pmf_table
+
+# Convert to a data frame for plotting
+pmf_df <- as.data.frame(pmf_table)
+colnames(pmf_df) <- c("YearsAtCompany", "Probability")
+
+
+# Plot the PMF
+library(ggplot2)
+
+# Find the max
+max_point <- pmf_df[which.max(pmf_df$Probability), ]
+
+ggplot(pmf_df, aes(x = as.numeric(as.character(YearsAtCompany)), y = Probability)) +
+  geom_col(fill = "steelblue", width = 0.7) +
+  
+  geom_text(data = max_point, 
+            aes(label = paste0("Max: ", round(Probability, 3))), 
+            vjust = -0.5, size = 3.5, color = "red") +
+  
+  labs(
+    title = "Probability Mass Function (PMF) of Employee Years at the Company",
+    subtitle = paste0("The most common year is ", max_point$YearsAtCompany, 
+                      " years with an estimated probability of (P = ", round(max_point$Probability, 3), ")"),
+    x = "Years at Company",
+    y = "Probability"
+  ) +
+  theme_minimal(base_size = 11.5)
+
+```
+
+## Expectation (Mean) and Variance
+```{r}
+# Expectation (mean)
+mean_X <- mean(X)
+mean_X
+
+# Variance
+var_X <- var(X)
+var_X
+
+# Standard Deviation
+sd_X <- sd(X)
+sd_X
+```
+
+
+
+## Cumulative Distribution Function (CDF)
+
+```{r}
+# Empirical CDF
+cdf_X <- ecdf(X)
+
+# Plot the CDF
+# plot(cdf_X, main="Empirical CDF of Years at Company", xlab="Years at Company", ylab="F(x)")
+
+# What proportion of employees have been at the company ≤ 5 years?
+cdf_X(5)
+```
+```{r}
+# Empirical CDF
+cdf_X <- ecdf(X)
+
+# Compute key probability: P(X ≤ 5)
+p_le5 <- cdf_X(5)
+
+# Plot the CDF
+plot(cdf_X, 
+     main = "Empirical CDF of Years at Company",
+     xlab = "Years at Company", 
+     ylab = "F(x)", 
+     col = "darkblue", lwd = 2, pch = 16, cex = 0.8)
+
+# Highlight the point at X = 5
+points(5, p_le5, col = "red", pch = 19, cex = 1.5)
+text(5, p_le5, labels = paste0(" P(X ≤ 5) = ", round(p_le5, 3)),
+     pos = 4, col = "red", cex = 0.9, font = 2)
+
+# Add grid for readability
+grid()
+
+```
+
+
+
+##  Define the Random Variable - Continuous
+
+Let Y = "MonthlyIncome" for a randomly selected employee, which is a continuous random variable,
+showing the monthly income of employees.
+
+### Probability Density Function (PDF)
+
+```{r}
+density_income <- density(df_selected$MonthlyIncome)
+head(density_income$x)
+head(density_income$y)
+
+```
+
+
+### Visualize the Distribution of variable MonthlyIncome
+```{r}
+# Histogram
+ggplot(df_selected, aes(x = MonthlyIncome)) +
+  geom_histogram(bins = 30, fill = "skyblue", color = "black") +
+  theme_minimal() +
+  labs(title = "Distribution of Monthly Income", x = "Monthly Income", y = "Count")
+```
+
+```{r}
+# Density Plot
+
+library(ggplot2)
+
+# Density estimation
+dens <- density(df_selected$MonthlyIncome)
+max_idx <- which.max(dens$y)
+max_x <- dens$x[max_idx]
+max_y <- dens$y[max_idx]
+
+# Plot
+ggplot(df_selected, aes(x = MonthlyIncome)) +
+  geom_density(fill = "orange", alpha = 0.6, color = "black", size = 1) +
+  geom_vline(xintercept = max_x, linetype = "dashed", color = "red", size = 1) +
+  annotate("point", x = max_x, y = max_y, color = "red", size = 3) +
+  annotate("text", x = max_x, y = max_y, 
+         label = paste0("Peak ≈ $", round(max_x,0)), 
+         vjust = 2, color = "darkblue", fontface = "bold", size = 5) +
+  labs(
+    title = "Probability Density Function (PDF) of Monthly Income",
+    subtitle = paste0("Most common income is around $", round(max_x,0),
+                      " (highest density)"),
+    x = "Monthly Income (USD)",
+    y = "Density"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+
+## Calculate Expectation (Mean) and Variance
+
+```{r}
+# Mean (expectation)
+mean_income <- mean(df_selected$MonthlyIncome)
+mean_income
+
+# Variance
+var_income <- var(df_selected$MonthlyIncome)
+var_income
+
+# Standard deviation
+sd_income <- sd(df_selected$MonthlyIncome)
+sd_income
+
+```
+
+
+
+
+## Empirical Cumulative Distribution Function (CDF)
+```{r}
+# Empirical CDF
+cdf_income <- ecdf(df_selected$MonthlyIncome)
+
+# Plot the CDF
+# plot(cdf_income, main = "Empirical CDF of Monthly Income", xlab = "Monthly Income", ylab = "F(x)")
+
+# Example: Proportion of employees earning <= $5000
+cdf_income(5000)
+
+```
+
+```{r}
+# Empirical CDF
+cdf_income <- ecdf(df_selected$MonthlyIncome)
+
+p_le_5000 <- cdf_income(5000)                 # P(X ≤ 5000)
+median_inc <- median(df_selected$MonthlyIncome)
+
+# Plot
+plot(cdf_income,
+     main = "Empirical CDF of Monthly Income",
+     xlab = "Monthly Income (USD)", ylab = "F(x)",
+     col = "black", lwd = 2, pch = 16, cex = 0.8)
+
+
+# Show P(X ≤ 5000)
+abline(v = 5000,           col = "red",  lty = 2)
+abline(h = p_le_5000,      col = "red",  lty = 2)
+points(5000, p_le_5000,    col = "red",  pch = 19, cex = 1.3)
+text(5000, p_le_5000, 
+     labels = paste0(" P(X ≤ 5000) = ", round(p_le_5000, 3)),
+     pos = 4, col = "red", cex = 0.95, font = 2)
+
+abline(v = median_inc, col = "blue", lty = 3)
+points(median_inc, 0.5, col = "blue", pch = 19, cex = 1.2) # 标记点（可选）
+text(median_inc, 0.52, 
+     labels = paste0("Median ≈ $", round(median_inc, 0)),
+     pos = 3, col = "blue", cex = 0.9, font = 2)
+
+
+grid(col = "gray90")
+
+```
+
+
+
+
+## Test for Normality
+
+```{r}
+# QQ Plot
+qqnorm(df_selected$MonthlyIncome)
+qqline(df_selected$MonthlyIncome, col = "red")
+```
+
+
